@@ -5,64 +5,47 @@
   <script type="text/javascript">
     function display() {
       var xmlURL = "https://raw.githubusercontent.com/alfred311/outcome-3-badge/main/badges.xml";  
-      var xmlstyleURL = "https://zzx2453712793-blip.github.io/xml-viewer/style.xsl";
+      var xmlstyleURL = "style.xsl";
 
-      var request = new XMLHttpRequest();
-      
-      // 1. 先获取 XSL（异步但顺序执行）
-      request.open("GET", xmlstyleURL, false);
+      var request;
       try {
+        if (window.XMLHttpRequest) {
+          request = new XMLHttpRequest();
+        } else {
+          request = new ActiveXObject("Microsoft.XMLHTTP");
+        }
+
+        request.open("GET", xmlURL, false);
         request.send();
-      } catch (e) {
-        alert("XSL 加载失败：" + e);
-        return;
-      }
-      
-      // 确保正确解析为 XML 文档
-      var xslDoc;
-      if (request.responseXML) {
-        xslDoc = request.responseXML;
-      } else {
-        // 备用：手动解析
-        var parser = new DOMParser();
-        xslDoc = parser.parseFromString(request.responseText, "text/xml");
-      }
+        var xmlDoc = request.responseXML;
+        // 新增 1：如果 responseXML 为 null，手动解析
+        if (!xmlDoc) {
+          var parser = new DOMParser();
+          xmlDoc = parser.parseFromString(request.responseText, "text/xml");
+        }
 
-      // 2. 获取 XML
-      request.open("GET", xmlURL, false);
-      try {
+        request.open("GET", xmlstyleURL, false);
         request.send();
-      } catch (e) {
-        alert("XML 加载失败：" + e);
-        return;
-      }
-      
-      var xmlDoc;
-      if (request.responseXML) {
-        xmlDoc = request.responseXML;
-      } else {
-        var parser = new DOMParser();
-        xmlDoc = parser.parseFromString(request.responseText, "text/xml");
-      }
+        var xslDoc = request.responseXML;
+        //新增 2：同样处理 XSL
+        if (!xslDoc) {
+          var parser = new DOMParser();
+          xslDoc = parser.parseFromString(request.responseText, "text/xml");
+        }
 
-      // 3. 执行 XSLT 转换（仍使用现有逻辑，忽略弃用警告）
-      try {
         if (window.ActiveXObject) {
-          // IE 旧版
           var result = xmlDoc.transformNode(xslDoc);
           document.getElementById("output").innerHTML = result;
         } else {
-          // 现代浏览器（尽管弃用，但依然可用）
           var processor = new XSLTProcessor();
           processor.importStylesheet(xslDoc);
+          // 新增 3：添加一个简单的 null 检查（防止意外崩溃）
+          if (!xmlDoc) throw new Error("XML 文档解析失败");
           var fragment = processor.transformToFragment(xmlDoc, document);
-          var output = document.getElementById("output");
-          output.innerHTML = '';            // 清空
-          output.appendChild(fragment);
+          document.getElementById("output").appendChild(fragment);
         }
       } catch (err) {
-        alert("XSLT 转换错误：" + err);
-        console.error(err);
+        alert("Error:" + err);
       }
     }
   </script>
