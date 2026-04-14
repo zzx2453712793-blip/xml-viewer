@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Display and Transform XML</title>
+  <script type="text/javascript">
+    function display() {
+      var xmlURL = "https://zzx2453712793-blip.github.io/xml-viewer/badges.xml";      // 改成你实际的文件名（和 html 放在同一个文件夹）
+      var xmlstyleURL = "https://zzx2453712793-blip.github.io/xml-viewer/style.xsl";
+
+      var request;
+      try {
+        if (window.XMLHttpRequest) {
+          request = new XMLHttpRequest();
+        } else {
+          request = new ActiveXObject("Microsoft.XMLHTTP");
+        }
+        // 加载 XML
+        request.open("GET", xmlURL, false);
+        request.send();
+        var xmlDoc = request.responseXML;
+        // 加载 XSLT
+        request.open("GET", xmlstyleURL, false);
+        request.send();
+        var xslDoc = request.responseXML;
+
+        // 转换并显示
+        if (window.ActiveXObject) {
+          var result = xmlDoc.transformNode(xslDoc);
+          document.getElementById("output").innerHTML = result;
+        } else {
+          var processor = new XSLTProcessor();
+          processor.importStylesheet(xslDoc);
+          var fragment = processor.transformToFragment(xmlDoc, document);
+          document.getElementById("output").appendChild(fragment);
+        }
+      } catch (err) {
+        alert("Error:" + err);
+      }
+    }
+  </script>
+</head>
+<body onload="display()">
+  <div id="output"></div>
+</body>
+</html>
